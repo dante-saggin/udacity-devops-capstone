@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-v2
+  labels:
+    app: flask-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-app
+      version: v2.0.0
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        version: v2.0.0
+    spec:
+      containers:
+        - name: app
+          image: dantesaggin/flask-app:v2
+          ports:
+            - name: web
+              containerPort: 80
+              protocol: TCP
+

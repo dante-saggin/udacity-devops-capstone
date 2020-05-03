@@ -1,5 +1,6 @@
-   commonLabels:
-     app: prediction-microservice
-   resources:
-   - deployment.yaml
-   - service.yaml
+  commonLabels:
+    app: flask-app
+    version: v1.0.0
+  resources:
+    - deployment.yaml
+    - service.yaml
