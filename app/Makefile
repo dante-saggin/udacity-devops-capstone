@@ -12,8 +12,8 @@ setup:
 
 install:
 	# This should be run from inside a virtualenv
-	pip install --global http.sslVerify false --upgrade pip &&\
-		pip install -r requirements.txt pip --global http.sslVerify false
+	pip install --upgrade pip &&\
+		pip install -r requirements.txt pip
 
 test:
 	# Additional, optional, tests could go here
