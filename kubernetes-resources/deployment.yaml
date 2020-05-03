@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prediction-microservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prediction-microservice
+  template:
+    metadata:
+      labels:
+        app: prediction-microservice
+    spec:
+      containers:
+        - name: app
+          image: dantesaggin/development
+          ports:
+            - name: web
+              containerPort: 80
+              protocol: TCP

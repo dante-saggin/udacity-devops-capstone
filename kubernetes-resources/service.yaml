@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: prediction-microservice
+spec:
+  type: LoadBalancer
+  selector:
+    app: prediction-microservice
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+      targetPort: 80
