@@ -1,11 +1,11 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: prediction-microservice
+  name: flask-app
 spec:
   type: LoadBalancer
   selector:
-    app: prediction-microservice
+    app: flask-app
   ports:
     - name: http
       protocol: TCP
