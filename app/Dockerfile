@@ -11,6 +11,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 EXPOSE 80
 
 HEALTHCHECK --interval=5m --timeout=3s \
-    CMD curl -v http://localhost:80/ping || exit 1
+    CMD curl -v http://localhost:8080/ping || exit 1
 
 CMD ["python", "app.py"]

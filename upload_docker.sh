@@ -5,12 +5,12 @@
 
 # Step 1:
 # Create dockerpath
-dockerpath=dantesaggin/flask-app/v1
+dockerpath=dantesaggin/flask-app:v1
 
 # Step 2:
 # Authenticate & tag
 echo "Docker ID and Image: $dockerpath"
-docker tag flask-app/v1 $dockerpath
+docker tag flask-app:v1 $dockerpath
 
 # Step 3:
 # Push image to a docker repository
