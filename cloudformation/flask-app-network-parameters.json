@@ -23,12 +23,33 @@
 		"ParameterKey": "PrivateSubnet2CIDR",
 		"ParameterValue": "10.0.3.0/24"
 	},
-	{
-        "ParameterKey": "InstanceType",
-        "ParameterValue": "t3.small"
+    {
+    	"ParameterKey": "BastionInstanceType",
+        "ParameterValue": "t2.micro"
     },
     {
-    	"ParameterKey": "ImageID",
+    	"ParameterKey": "BastionImageID",
         "ParameterValue": "ami-003634241a8fcdec0"
+    },
+    {
+    	"ParameterKey": "KeyName",
+        "ParameterValue": "capstone"
+    },
+    {
+    	"ParameterKey": "WorkerNodeImageId",
+        "ParameterValue": "ami-0ac376dde98c141d0"
+    },
+    {
+    	"ParameterKey": "WorkerNodeInstanceType",
+        "ParameterValue": "t2.micro"
+    },
+    {
+    	"ParameterKey": "WorkerNodeBootstrapArguments",
+        "ParameterValue": "--kubelet-extra-args --node-labels=nodetype=worker"
     }
 ]
+
+
+
+
+

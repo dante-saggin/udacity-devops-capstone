@@ -1,8 +1,5 @@
 Description: >
-    Udagram - Deploy a high-availability web app using CloudFormation \n
-    This Script will deploy network required to deploy the udagram webapp.
-    This project is part of the nanodegree AWS Cloud DevOps.
-    Dante Saggin
+    This cloudformation script will prepare to deploy the flask-app into a Amazon Elastic Kubernetes Service.
 
 Parameters:
     EnvironmentName:
@@ -34,16 +31,37 @@ Parameters:
         Type: String
         Default: 10.0.3.0/24
 
-    InstanceType:
+    BastionInstanceType:
         Description:
             "The EC2 instance type of general purpose"
         Type: String
         AllowedValues: [t2.micro, t2.medium, t3.small, t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge]
 
-    ImageID:
+    BastionImageID:
         Description: ImageID to create Ec2 instances
         Type: "String"
         Default: "ami-005bdb005fb00e791"
+
+    KeyName:
+      Description: The EC2 Key Pair to allow SSH access to the instances
+      Type: AWS::EC2::KeyPair::KeyName
+      Default: my-ssh-key
+
+    WorkerNodeImageId:
+      Type: AWS::EC2::Image::Id
+      Description: AMI id for the EKS Worker node instances. Search EKS Worker AMIs provided by AWS.
+      Default: "ami-0ac376dde98c141d0"
+
+    WorkerNodeInstanceType:
+      Description: EC2 instance type for the node instances
+      Type: String
+      Default: "t2.micro"
+
+    WorkerNodeBootstrapArguments:
+      Description: Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami
+      Default: "--kubelet-extra-args --node-labels=nodetype=worker"
+      Type: String
+
 
 Resources:
     VPC:
@@ -207,83 +225,6 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
-    UdacityS3ReadOnlyEC2:
-        Type: AWS::IAM::Role
-        Properties:
-            RoleName:
-                !Sub ${EnvironmentName}-Role
-            AssumeRolePolicyDocument:
-                Version: "2012-10-17"
-                Statement:
-                -   Effect: Allow
-                    Principal:
-                        Service:
-                        - ec2.amazonaws.com
-                    Action:
-                    - sts:AssumeRole
-            Path: "/"
-
-    RolePolicies:
-        Type: AWS::IAM::Policy
-        Properties:
-            PolicyName: AmazonS3ReadOnlyAccess
-            PolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                -
-                    Effect: Allow
-                    Action:
-                    -   s3:Get*
-                    -   s3:List*
-                    Resource:
-                    -   arn:aws:s3:::udacity-demo-1
-                    -   arn:aws:s3:::udacity-demo-1/*
-            Roles:
-            -   Ref: UdacityS3ReadOnlyEC2
-
-    ProfileWithRolesForOurApp:
-        Type: AWS::IAM::InstanceProfile
-        Properties:
-            Path: "/"
-            Roles:
-            - Ref: UdacityS3ReadOnlyEC2
-
-    LoadBalancerSecurityGroup:
-            Type: AWS::EC2::SecurityGroup
-            Properties:
-                GroupDescription: Allow http traffic to and from load balancer
-                VpcId: !Ref VPC
-                SecurityGroupIngress:
-                -   IpProtocol: tcp
-                    FromPort: 80
-                    ToPort: 80
-                    CidrIp: 0.0.0.0/0
-                SecurityGroupEgress:
-                -   IpProtocol: tcp
-                    FromPort: 80
-                    ToPort: 80
-                    CidrIp: 0.0.0.0/0
-
-    WebServerSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-            GroupDescription: Allow http and ssh to our load balancer
-            VpcId: !Ref VPC
-            SecurityGroupIngress:
-            -   IpProtocol: tcp
-                FromPort: 80
-                ToPort: 80
-                CidrIp: 0.0.0.0/0
-            -   IpProtocol: tcp
-                FromPort: 22
-                ToPort: 22
-                CidrIp: 0.0.0.0/0
-            SecurityGroupEgress:
-            -   IpProtocol: tcp
-                FromPort: 0
-                ToPort: 65535
-                CidrIp: 0.0.0.0/0
-
     BastionSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
@@ -300,110 +241,238 @@ Resources:
                 ToPort: 65535
                 CidrIp: 0.0.0.0/0
 
-    WebAppLaunchConfig:
-        Type: AWS::AutoScaling::LaunchConfiguration
-        DependsOn: WebServerSecurityGroup
-        Properties:
-            UserData:
-                 Fn::Base64:
-                   Fn::Join:
-                    - ''
-                    - - "#!/bin/bash \n"
-                      - "apt-get update -y \n"
-                      - "apt-get install unzip awscli -y \n"
-                      - "apt-get install apache2 -y \n"
-                      - "systemctl start apache2.service \n"
-                      - "cd /var/www/html \n "
-                      - "aws s3 cp s3://udacity-demo-1/udacity.zip . \n"
-                      - "unzip -o udacity.zip \n"
-                      - "/opt/aws/bin/cfn-signal -e $? "
-                      - "         --stack "
-                      - !Ref AWS::StackName
-                      - "         --resource WebServerGroup "
-                      - "         --region "
-                      - !Ref AWS::Region
-                      - "\n"
-            ImageId: !Ref ImageID
-            IamInstanceProfile: !Ref ProfileWithRolesForOurApp
-            SecurityGroups:
-            -   Ref: WebServerSecurityGroup
-            InstanceType: !Ref 'InstanceType'
-            BlockDeviceMappings:
-            -   DeviceName: "/dev/sdk"
-                Ebs:
-                    VolumeSize: '10'
-
-    WebAppTargetGroup:
-        Type: AWS::ElasticLoadBalancingV2::TargetGroup
-        Properties:
-            HealthCheckIntervalSeconds: 10
-            HealthCheckPath: /
-            HealthCheckProtocol: HTTP
-            HealthCheckTimeoutSeconds: 8
-            HealthyThresholdCount: 2
-            Port: 80
-            Protocol: HTTP
-            UnhealthyThresholdCount: 5
-            VpcId: !Ref VPC
-
-    WebAppGroup:
-        Type: AWS::AutoScaling::AutoScalingGroup
-        Properties:
-            VPCZoneIdentifier:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-            LaunchConfigurationName:
-                Ref: WebAppLaunchConfig
-            MinSize: '1'
-            MaxSize: '6'
-            TargetGroupARNs:
-            -   Ref: WebAppTargetGroup
-
-    WebAppLB:
-        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-        Properties:
-            SecurityGroups:
-            - Ref: LoadBalancerSecurityGroup
-            Subnets:
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-
-    Listener:
-        Type: AWS::ElasticLoadBalancingV2::Listener
-        Properties:
-            DefaultActions:
-            -   Type: forward
-                TargetGroupArn:
-                    Ref: WebAppTargetGroup
-            LoadBalancerArn:
-                Ref: WebAppLB
-            Port: 80
-            Protocol: HTTP
-
-    ALBListenerRule:
-        Type: AWS::ElasticLoadBalancingV2::ListenerRule
-        Properties:
-            Actions:
-            -   Type: forward
-                TargetGroupArn: !Ref 'WebAppTargetGroup'
-            Conditions:
-            -   Field: path-pattern
-                Values: [/]
-            ListenerArn: !Ref 'Listener'
-            Priority: 1
-
     BastionInstance:
         Type: "AWS::EC2::Instance"
         DependsOn: BastionSecurityGroup
         Properties:
-            InstanceType: !Ref InstanceType
-            ImageId: !Ref ImageID
+            InstanceType: !Ref BastionInstanceType
+            ImageId: !Ref BastionImageID
+            KeyName: !Ref KeyName
             NetworkInterfaces:
               - AssociatePublicIpAddress: "true"
                 DeviceIndex: "0"
                 SubnetId: !Ref PublicSubnet1
                 GroupSet:
                 - !Ref BastionSecurityGroup
+
+    EKSClusterInstanceProfile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Path: "/"
+        Roles:
+        - !Ref EKSClusterInstanceRole
+
+    EKSClusterInstanceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - eks.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Path: "/"
+        RoleName: !Join [ "-", [ !Ref 'AWS::StackName', "EKS-Cluster-Role" ] ]
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+          - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+          - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
+
+    EKSClusterSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group EKS Cluster
+        GroupName: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster-Security-Group" ] ]
+        VpcId: !Ref VPC
+        Tags:
+        - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+          Value: 'owned'
+        - Key: 'Name'
+          Value: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster-Security-Group" ] ]
+
+    EKSCluster:
+      Type: "AWS::EKS::Cluster"
+      Properties:
+        Name: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster" ] ]
+        ResourcesVpcConfig:
+          SecurityGroupIds:
+            - !Ref EKSClusterSecurityGroup
+          SubnetIds:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+        RoleArn: !GetAtt EKSClusterInstanceRole.Arn
+        Version: 1.16
+
+    WorkerNodeInstanceProfile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Path: "/"
+        Roles:
+        - !Ref WorkerNodeInstanceRole
+
+    WorkerNodeInstanceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Path: "/"
+        RoleName: !Join [ "-", [ !Ref 'AWS::StackName', "EKS-Worker-Node-Role" ] ]
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+          - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+          - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+    WorkerNodeSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for all nodes in the cluster
+        GroupName: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Worker-Node-Security-Group" ] ]
+        VpcId: !Ref VPC
+        Tags:
+        - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+          Value: 'owned'
+        - Key: 'Name'
+          Value: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Worker-Node-Security-Group" ] ]
+
+    AllowInboundTrafficToWorkerNodesFromWorkerNodes:
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: Allow kubernetes node to communicate with each other
+        GroupId: !Ref WorkerNodeSecurityGroup
+        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        IpProtocol: '-1'
+        FromPort: 0
+        ToPort: 65535
+
+    AllowInboundToWorkerNodesFromEKSCluster:
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
+        GroupId: !Ref WorkerNodeSecurityGroup
+        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: tcp
+        FromPort: 1025
+        ToPort: 65535
+
+    AllowTCPOutboundFromEKSClusterToWorkerNodes:
+      Type: AWS::EC2::SecurityGroupEgress
+      Properties:
+        Description: Allow the cluster control plane to communicate with worker Kubelet and pods
+        GroupId: !Ref EKSClusterSecurityGroup
+        DestinationSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        IpProtocol: tcp
+        FromPort: 1025
+        ToPort: 65535
+
+    AllowHTTPInboundToWorkerNodesFromEKSCluster:
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: Allow pods running extension API servers on port 80 to receive communication from cluster control plane
+        GroupId: !Ref WorkerNodeSecurityGroup
+        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+
+    AllowHTTPOutboundFromEKSClusterToWorkerNodes:
+      Type: AWS::EC2::SecurityGroupEgress
+      Properties:
+        Description: Allow the cluster control plane to communicate with pods running extension API servers on port 80
+        GroupId: !Ref EKSClusterSecurityGroup
+        DestinationSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+
+    AllowHTTPInboundToEKSClusterFromWorkerNodes:
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: Allow pods to communicate with the cluster API Server
+        GroupId: !Ref EKSClusterSecurityGroup
+        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        IpProtocol: tcp
+        ToPort: 80
+        FromPort: 80
+
+    AllowInboundTrafficFromEKSClustertoEKSCluster:
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: Allow pods to communicate with the cluster API Server
+        GroupId: !Ref EKSClusterSecurityGroup
+        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: -1
+        ToPort: 0
+        FromPort: 65535
+
+    AllowOutboundTrafficFromEKSClustertoEKSCluster:
+      Type: AWS::EC2::SecurityGroupEgress
+      Properties:
+        Description: Allow pods to communicate with the cluster API Server
+        GroupId: !Ref EKSClusterSecurityGroup
+        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: -1
+        ToPort: 0
+        FromPort: 65535
+
+    WorkerNodeLaunchConfig:
+      Type: AWS::AutoScaling::LaunchConfiguration
+      Properties:
+        AssociatePublicIpAddress: 'False'
+        IamInstanceProfile: !Ref WorkerNodeInstanceProfile
+        ImageId: !Ref WorkerNodeImageId
+        InstanceType: !Ref WorkerNodeInstanceType
+        KeyName: !Ref KeyName
+        SecurityGroups:
+        - !Ref WorkerNodeSecurityGroup
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 10
+              VolumeType: gp2
+              DeleteOnTermination: true
+        UserData:
+          Fn::Base64:
+            !Sub |
+              #!/bin/bash
+              set -o xtrace
+              /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
+              /opt/aws/bin/cfn-signal --exit-code $? \
+                       --stack  ${AWS::StackName} \
+                       --resource NodeGroup  \
+                       --region ${AWS::Region}
+
+    WorkerNodeGroup:
+      Type: AWS::AutoScaling::AutoScalingGroup
+      Properties:
+        DesiredCapacity: 2
+        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
+        MinSize: 2
+        MaxSize: 3
+        VPCZoneIdentifier:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+        Tags:
+        - Key: Name
+          Value: !Sub "${EKSCluster}-Worker-Node"
+          PropagateAtLaunch: 'true'
+        - Key: !Sub 'kubernetes.io/cluster/${EKSCluster}'
+          Value: 'owned'
+          PropagateAtLaunch: 'true'
+      UpdatePolicy:
+        AutoScalingRollingUpdate:
+          MaxBatchSize: '1'
+          MinInstancesInService: 1
+
 
 Outputs:
 
@@ -416,12 +485,6 @@ Outputs:
     BastionInstance:
         Description: Bastion Instance adress to enable debuging into the instances in the private network
         Value: !GetAtt BastionInstance.PublicIp
-
-    WebAppLoadBalancerDNSName:
-        Description: DNS name or Public URL of the Load Balancer
-        Value: !Join [ "", [ 'http://', !GetAtt WebAppLB.DNSName ]]
-        Export:
-            Name: !Sub ${EnvironmentName}-LB-DNSName
 
     PublicSubnets:
         Description: A list of the public subnets

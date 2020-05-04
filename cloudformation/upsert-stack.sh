@@ -28,11 +28,11 @@ then
 fi
 if [ -z "$template_body" ]
 then
-	template_body="udagram-network.yaml"
+	template_body="flask-app-network.yaml"
 fi
 if [ -z "$parameters" ]
 then
-	parameters="udagram-network-parameters.json"
+	parameters="flask-app-network-parameters.json"
 fi
 if [ -z "$region" ]
 then
