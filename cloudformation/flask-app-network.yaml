@@ -259,19 +259,19 @@ Resources:
                 ToPort: 65535
                 CidrIp: 0.0.0.0/0
 
-#    BastionInstance:
-#        Type: "AWS::EC2::Instance"
-#        DependsOn: BastionSecurityGroup
-#        Properties:
-#            InstanceType: !Ref BastionInstanceType
-#            ImageId: !Ref BastionImageID
-#            KeyName: !Ref KeyName
-#            NetworkInterfaces:
-#              - AssociatePublicIpAddress: "true"
-#                DeviceIndex: "0"
-#                SubnetId: !Ref PublicSubnet1
-#                GroupSet:
-#                - !Ref BastionSecurityGroup
+    BastionInstance:
+        Type: "AWS::EC2::Instance"
+        DependsOn: BastionSecurityGroup
+        Properties:
+            InstanceType: !Ref BastionInstanceType
+            ImageId: !Ref BastionImageID
+            KeyName: !Ref KeyName
+            NetworkInterfaces:
+              - AssociatePublicIpAddress: "true"
+                DeviceIndex: "0"
+                SubnetId: !Ref PublicSubnet1
+                GroupSet:
+                - !Ref BastionSecurityGroup
 
     EKSClusterInstanceProfile:
       Type: AWS::IAM::InstanceProfile
