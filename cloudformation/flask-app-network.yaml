@@ -387,7 +387,7 @@ Resources:
       Properties:
         Description: Allow the cluster control plane to communicate with worker Kubelet and pods
         GroupId: !Ref EKSClusterSecurityGroup
-        DestinationSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        CidrIp: 0.0.0.0/0
         IpProtocol: tcp
         FromPort: 1025
         ToPort: 65535
@@ -407,7 +407,7 @@ Resources:
       Properties:
         Description: Allow the cluster control plane to communicate with pods running extension API servers on port 80
         GroupId: !Ref EKSClusterSecurityGroup
-        DestinationSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        CidrIp: 0.0.0.0/0
         IpProtocol: tcp
         FromPort: 80
         ToPort: 80
@@ -437,10 +437,20 @@ Resources:
       Properties:
         Description: Allow pods to communicate with the cluster API Server
         GroupId: !Ref EKSClusterSecurityGroup
-        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
+        CidrIp: 0.0.0.0/0
         IpProtocol: -1
         ToPort: 0
         FromPort: 65535
+
+    AllowOutboundTrafficFromWorknoetoOutside:
+      Type: AWS::EC2::SecurityGroupEgress
+      Properties:
+        Description: Allow pods to communicate with the cluster API Server
+        GroupId: !Ref WorkerNodeSecurityGroup
+        CidrIp: 0.0.0.0/0
+        IpProtocol: -1
+        ToPort: 22
+        FromPort: 65000
 
     WorkerNodeLaunchConfig:
       Type: AWS::AutoScaling::LaunchConfiguration
