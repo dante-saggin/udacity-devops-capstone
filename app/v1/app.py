@@ -6,10 +6,12 @@ app = Flask(__name__)
 LOG = create_logger(app)
 LOG.setLevel(logging.INFO)
 
+@app.route("/", methods=['GET'])
 @app.route("/ping", methods=['GET'])
 def ping():
     return jsonify(
-            status="ok"
+            status="ok",
+            version="v1"
         )
 
 @app.route("/mini-game/<name>", methods=['GET'])
