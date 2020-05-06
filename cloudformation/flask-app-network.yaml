@@ -367,6 +367,16 @@ Resources:
       Properties:
         Description: Allow kubernetes node to communicate with each other
         GroupId: !Ref WorkerNodeSecurityGroup
+        SourceSecurityGroupId: !Ref BastionSecurityGroup
+        IpProtocol: '-1'
+        FromPort: 0
+        ToPort: 65535
+
+    AllowBastionTrafficToWorkerNodes:
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: Allow kubernetes node to communicate with each other
+        GroupId: !Ref WorkerNodeSecurityGroup
         SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
         IpProtocol: '-1'
         FromPort: 0
