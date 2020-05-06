@@ -98,6 +98,8 @@ Resources:
                   Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
                 - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
                   Value: shared
+                - Key: "kubernetes.io/role/elb"
+                  Value: "1"
 
     PublicSubnet2:
         Type: AWS::EC2::Subnet
@@ -111,6 +113,8 @@ Resources:
                   Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
                 - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
                   Value: shared
+                - Key: "kubernetes.io/role/elb"
+                  Value: "1"
 
     PrivateSubnet1:
         Type: AWS::EC2::Subnet
@@ -122,8 +126,10 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
-                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+                - Key: !Sub "kubernetes.io/role/internal-elb"
                   Value: 1
+                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+                  Value: shared
 
     PrivateSubnet2:
         Type: AWS::EC2::Subnet
@@ -135,9 +141,10 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
-                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+                - Key: !Sub "kubernetes.io/role/internal-elb"
                   Value: 1
-
+                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+                  Value: shared
     NatGateway1EIP:
         Type: AWS::EC2::EIP
         DependsOn: InternetGatewayAttachment
@@ -469,14 +476,13 @@ Resources:
               DeleteOnTermination: true
         UserData:
           Fn::Base64:
-            !Sub |
-              #!/bin/bash
-              set -o xtrace
-              /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
-              /opt/aws/bin/cfn-signal --exit-code $? \
-                       --stack  ${AWS::StackName} \
-                       --resource NodeGroup  \
-                       --region ${AWS::Region}
+            Fn::Sub:
+             - |
+              #!/bin/bash -xe
+              /etc/eks/bootstrap.sh \
+             - --apiserver-endpoint Fn::GetAtt EKSCluster.Endpoint \
+             - --b64-cluster-ca Fn::GetAtt EKSCluster.CertificateAuthorityData \
+             - ${AWS::StackName}-EKS-Cluster
 
     WorkerNodeGroup:
       Type: AWS::AutoScaling::AutoScalingGroup
