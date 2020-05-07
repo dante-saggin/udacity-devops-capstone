@@ -426,8 +426,8 @@ Resources:
         GroupId: !Ref EKSClusterSecurityGroup
         SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
         IpProtocol: tcp
-        ToPort: 80
-        FromPort: 443
+        ToPort: 443
+        FromPort: 80
 
     AllowInboundTrafficFromEKSClustertoEKSCluster:
       Type: AWS::EC2::SecurityGroupIngress
