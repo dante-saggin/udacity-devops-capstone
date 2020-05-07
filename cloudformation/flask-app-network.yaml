@@ -479,7 +479,7 @@ Resources:
           Fn::Base64:
             !Sub |
               - #!/bin/bash -xe
-              /etc/eks/bootstrap.sh --apiserver-endpoint ${EKSCluster.Endpoint} --b64-cluster-ca ${EKSCluster.CertificateAuthorityData} ${AWS::StackName}-EKS-Cluster
+              /etc/eks/bootstrap.sh --apiserver-endpoint ${EKSCluster.Endpoint} --b64-cluster-ca ${EKSCluster.CertificateAuthorityData} ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
 
     WorkerNodeGroup:
       Type: AWS::AutoScaling::AutoScalingGroup
