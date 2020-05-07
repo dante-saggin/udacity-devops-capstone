@@ -240,35 +240,35 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
-    BastionSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-            GroupDescription: Allow SSH to our BastionInstance
-            VpcId: !Ref VPC
-            SecurityGroupIngress:
-            -   IpProtocol: tcp
-                FromPort: 22
-                ToPort: 22
-                CidrIp: 0.0.0.0/0
-            SecurityGroupEgress:
-            -   IpProtocol: tcp
-                FromPort: 0
-                ToPort: 65535
-                CidrIp: 0.0.0.0/0
-
-    BastionInstance:
-        Type: "AWS::EC2::Instance"
-        DependsOn: BastionSecurityGroup
-        Properties:
-            InstanceType: !Ref BastionInstanceType
-            ImageId: !Ref BastionImageID
-            KeyName: !Ref KeyName
-            NetworkInterfaces:
-              - AssociatePublicIpAddress: "true"
-                DeviceIndex: "0"
-                SubnetId: !Ref PublicSubnet1
-                GroupSet:
-                - !Ref BastionSecurityGroup
+#    BastionSecurityGroup:
+#        Type: AWS::EC2::SecurityGroup
+#        Properties:
+#            GroupDescription: Allow SSH to our BastionInstance
+#            VpcId: !Ref VPC
+#            SecurityGroupIngress:
+#            -   IpProtocol: tcp
+#                FromPort: 22
+#                ToPort: 22
+#                CidrIp: 0.0.0.0/0
+#            SecurityGroupEgress:
+#            -   IpProtocol: tcp
+#                FromPort: 0
+#                ToPort: 65535
+#                CidrIp: 0.0.0.0/0
+#
+#    BastionInstance:
+#        Type: "AWS::EC2::Instance"
+#        DependsOn: BastionSecurityGroup
+#        Properties:
+#            InstanceType: !Ref BastionInstanceType
+#            ImageId: !Ref BastionImageID
+#            KeyName: !Ref KeyName
+#            NetworkInterfaces:
+#              - AssociatePublicIpAddress: "true"
+#                DeviceIndex: "0"
+#                SubnetId: !Ref PublicSubnet1
+#                GroupSet:
+#                - !Ref BastionSecurityGroup
 
     EKSClusterInstanceProfile:
       Type: AWS::IAM::InstanceProfile
@@ -308,18 +308,18 @@ Resources:
         - Key: 'Name'
           Value: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster-Security-Group" ] ]
 
-    EKSCluster:
-      Type: "AWS::EKS::Cluster"
-      Properties:
-        Name: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster" ] ]
-        ResourcesVpcConfig:
-          SecurityGroupIds:
-            - !Ref EKSClusterSecurityGroup
-          SubnetIds:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-        RoleArn: !GetAtt EKSClusterInstanceRole.Arn
-        Version: 1.16
+#    EKSCluster:
+#      Type: "AWS::EKS::Cluster"
+#      Properties:
+#        Name: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster" ] ]
+#        ResourcesVpcConfig:
+#          SecurityGroupIds:
+#            - !Ref EKSClusterSecurityGroup
+#          SubnetIds:
+#            - !Ref PrivateSubnet1
+#            - !Ref PrivateSubnet2
+#        RoleArn: !GetAtt EKSClusterInstanceRole.Arn
+#        Version: 1.15
 
     WorkerNodeInstanceProfile:
       Type: AWS::IAM::InstanceProfile
@@ -472,7 +472,7 @@ Resources:
         BlockDeviceMappings:
           - DeviceName: /dev/xvda
             Ebs:
-              VolumeSize: 20
+              VolumeSize: 10
               VolumeType: gp2
               DeleteOnTermination: true
         UserData:
@@ -481,27 +481,27 @@ Resources:
               - #!/bin/bash -xe
               /etc/eks/bootstrap.sh --apiserver-endpoint ${EKSCluster.Endpoint} --b64-cluster-ca ${EKSCluster.CertificateAuthorityData} ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
 
-    WorkerNodeGroup:
-      Type: AWS::AutoScaling::AutoScalingGroup
-      Properties:
-        DesiredCapacity: 2
-        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 2
-        MaxSize: 3
-        VPCZoneIdentifier:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-        Tags:
-        - Key: Name
-          Value: !Sub "${EKSCluster}-Worker-Node"
-          PropagateAtLaunch: 'true'
-        - Key: !Sub 'kubernetes.io/cluster/${EKSCluster}'
-          Value: 'owned'
-          PropagateAtLaunch: 'true'
-      UpdatePolicy:
-        AutoScalingRollingUpdate:
-          MaxBatchSize: '1'
-          MinInstancesInService: 1
+#    WorkerNodeGroup:
+#      Type: AWS::AutoScaling::AutoScalingGroup
+#      Properties:
+#        DesiredCapacity: 2
+#        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
+#        MinSize: 2
+#        MaxSize: 3
+#        VPCZoneIdentifier:
+#            - !Ref PrivateSubnet1
+#            - !Ref PrivateSubnet2
+#        Tags:
+#        - Key: Name
+#          Value: !Sub "${EKSCluster}-Worker-Node"
+#          PropagateAtLaunch: 'true'
+#        - Key: !Sub 'kubernetes.io/cluster/${EKSCluster}'
+#          Value: 'owned'
+#          PropagateAtLaunch: 'true'
+#      UpdatePolicy:
+#        AutoScalingRollingUpdate:
+#          MaxBatchSize: '1'
+#          MinInstancesInService: 1
 
 
 Outputs:
