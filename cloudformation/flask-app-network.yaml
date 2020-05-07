@@ -21,22 +21,12 @@ Parameters:
         Type: String
         Default: 10.0.1.0/24
 
-    PublicSubnet3CIDR:
-        Description: Please enter the IP range (CIDR notation) for the Subnet
-        Type: String
-        Default: 10.0.1.0/24
-
     PrivateSubnet1CIDR:
         Description: Please enter the IP range (CIDR notation) for the Subnet
         Type: String
         Default: 10.0.2.0/24
 
     PrivateSubnet2CIDR:
-        Description: Please enter the IP range (CIDR notation) for the Subnet
-        Type: String
-        Default: 10.0.3.0/24
-
-    PrivateSubnet3CIDR:
         Description: Please enter the IP range (CIDR notation) for the Subnet
         Type: String
         Default: 10.0.3.0/24
@@ -126,21 +116,6 @@ Resources:
                 - Key: "kubernetes.io/role/elb"
                   Value: "1"
 
-    PublicSubnet3:
-        Type: AWS::EC2::Subnet
-        Properties:
-            VpcId: !Ref VPC
-            AvailabilityZone: us-west-2c
-            CidrBlock: !Ref PublicSubnet3CIDR
-            MapPublicIpOnLaunch: true
-            Tags:
-                - Key: Name
-                  Value: !Sub ${EnvironmentName} Public Subnet (AZ3)
-                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
-                  Value: shared
-                - Key: "kubernetes.io/role/elb"
-                  Value: "1"
-
     PrivateSubnet1:
         Type: AWS::EC2::Subnet
         Properties:
@@ -171,21 +146,6 @@ Resources:
                 - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
                   Value: shared
 
-    PrivateSubnet3:
-        Type: AWS::EC2::Subnet
-        Properties:
-            VpcId: !Ref VPC
-            AvailabilityZone: us-west-2c
-            CidrBlock: !Ref PrivateSubnet3CIDR
-            MapPublicIpOnLaunch: false
-            Tags:
-                - Key: Name
-                  Value: !Sub ${EnvironmentName} Private Subnet (AZ3)
-                - Key: !Sub "kubernetes.io/role/internal-elb"
-                  Value: 1
-                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
-                  Value: shared
-
     NatGateway1EIP:
         Type: AWS::EC2::EIP
         DependsOn: InternetGatewayAttachment
@@ -193,12 +153,6 @@ Resources:
             Domain: vpc
 
     NatGateway2EIP:
-        Type: AWS::EC2::EIP
-        DependsOn: InternetGatewayAttachment
-        Properties:
-            Domain: vpc
-
-    NatGateway3EIP:
         Type: AWS::EC2::EIP
         DependsOn: InternetGatewayAttachment
         Properties:
@@ -215,12 +169,6 @@ Resources:
         Properties:
             AllocationId: !GetAtt NatGateway2EIP.AllocationId
             SubnetId: !Ref PublicSubnet2
-
-    NatGateway3:
-        Type: AWS::EC2::NatGateway
-        Properties:
-            AllocationId: !GetAtt NatGateway3EIP.AllocationId
-            SubnetId: !Ref PublicSubnet3
 
     PublicRouteTable:
         Type: AWS::EC2::RouteTable
@@ -249,12 +197,6 @@ Resources:
         Properties:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet2
-
-    PublicSubnet3RouteTableAssociation:
-        Type: AWS::EC2::SubnetRouteTableAssociation
-        Properties:
-            RouteTableId: !Ref PublicRouteTable
-            SubnetId: !Ref PublicSubnet3
 
     PrivateRouteTable1:
         Type: AWS::EC2::RouteTable
@@ -297,27 +239,6 @@ Resources:
         Properties:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
-
-    PrivateRouteTable3:
-        Type: AWS::EC2::RouteTable
-        Properties:
-            VpcId: !Ref VPC
-            Tags:
-                - Key: Name
-                  Value: !Sub ${EnvironmentName} Private Routes (AZ3)
-
-    DefaultPrivateRoute3:
-        Type: AWS::EC2::Route
-        Properties:
-            RouteTableId: !Ref PrivateRouteTable3
-            DestinationCidrBlock: 0.0.0.0/0
-            NatGatewayId: !Ref NatGateway3
-
-    PrivateSubnet3RouteTableAssociation:
-        Type: AWS::EC2::SubnetRouteTableAssociation
-        Properties:
-            RouteTableId: !Ref PrivateRouteTable3
-            SubnetId: !Ref PrivateSubnet3
 
     BastionSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -397,7 +318,6 @@ Resources:
           SubnetIds:
             - !Ref PrivateSubnet1
             - !Ref PrivateSubnet2
-            - !Ref PrivateSubnet3
         RoleArn: !GetAtt EKSClusterInstanceRole.Arn
         Version: 1.16
 
@@ -571,7 +491,6 @@ Resources:
         VPCZoneIdentifier:
             - !Ref PrivateSubnet1
             - !Ref PrivateSubnet2
-            - !Ref PrivateSubnet3
         Tags:
         - Key: Name
           Value: !Sub "${EKSCluster}-Worker-Node"
