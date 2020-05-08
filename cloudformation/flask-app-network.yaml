@@ -240,35 +240,35 @@ Resources:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
 
-#    BastionSecurityGroup:
-#        Type: AWS::EC2::SecurityGroup
-#        Properties:
-#            GroupDescription: Allow SSH to our BastionInstance
-#            VpcId: !Ref VPC
-#            SecurityGroupIngress:
-#            -   IpProtocol: tcp
-#                FromPort: 22
-#                ToPort: 22
-#                CidrIp: 0.0.0.0/0
-#            SecurityGroupEgress:
-#            -   IpProtocol: tcp
-#                FromPort: 0
-#                ToPort: 65535
-#                CidrIp: 0.0.0.0/0
-#
-#    BastionInstance:
-#        Type: "AWS::EC2::Instance"
-#        DependsOn: BastionSecurityGroup
-#        Properties:
-#            InstanceType: !Ref BastionInstanceType
-#            ImageId: !Ref BastionImageID
-#            KeyName: !Ref KeyName
-#            NetworkInterfaces:
-#              - AssociatePublicIpAddress: "true"
-#                DeviceIndex: "0"
-#                SubnetId: !Ref PublicSubnet1
-#                GroupSet:
-#                - !Ref BastionSecurityGroup
+    BastionSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow SSH to our BastionInstance
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+            -   IpProtocol: tcp
+                FromPort: 22
+                ToPort: 22
+                CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            -   IpProtocol: tcp
+                FromPort: 0
+                ToPort: 65535
+                CidrIp: 0.0.0.0/0
+
+    BastionInstance:
+        Type: "AWS::EC2::Instance"
+        DependsOn: BastionSecurityGroup
+        Properties:
+            InstanceType: !Ref BastionInstanceType
+            ImageId: !Ref BastionImageID
+            KeyName: !Ref KeyName
+            NetworkInterfaces:
+              - AssociatePublicIpAddress: "true"
+                DeviceIndex: "0"
+                SubnetId: !Ref PublicSubnet1
+                GroupSet:
+                - !Ref BastionSecurityGroup
 
     EKSClusterInstanceProfile:
       Type: AWS::IAM::InstanceProfile
@@ -308,18 +308,18 @@ Resources:
         - Key: 'Name'
           Value: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster-Security-Group" ] ]
 
-#    EKSCluster:
-#      Type: "AWS::EKS::Cluster"
-#      Properties:
-#        Name: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster" ] ]
-#        ResourcesVpcConfig:
-#          SecurityGroupIds:
-#            - !Ref EKSClusterSecurityGroup
-#          SubnetIds:
-#            - !Ref PrivateSubnet1
-#            - !Ref PrivateSubnet2
-#        RoleArn: !GetAtt EKSClusterInstanceRole.Arn
-#        Version: 1.15
+    EKSCluster:
+      Type: "AWS::EKS::Cluster"
+      Properties:
+        Name: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Cluster" ] ]
+        ResourcesVpcConfig:
+          SecurityGroupIds:
+            - !Ref EKSClusterSecurityGroup
+          SubnetIds:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+        RoleArn: !GetAtt EKSClusterInstanceRole.Arn
+        Version: 1.15
 
     WorkerNodeInstanceProfile:
       Type: AWS::IAM::InstanceProfile
@@ -369,95 +369,71 @@ Resources:
         FromPort: 0
         ToPort: 65535
 
-    AllowBastionTrafficToWorkerNodes:
-      Type: AWS::EC2::SecurityGroupIngress
+    WorkerNodeSecurityGroupIngress:
+      Type: "AWS::EC2::SecurityGroupIngress"
+      DependsOn: WorkerNodeSecurityGroup
       Properties:
-        Description: Allow kubernetes node to communicate with each other
-        GroupId: !Ref WorkerNodeSecurityGroup
-        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
-        IpProtocol: '-1'
+        Description: Allow node to communicate with each other
         FromPort: 0
-        ToPort: 65535
-
-    AllowInboundToWorkerNodesFromEKSCluster:
-      Type: AWS::EC2::SecurityGroupIngress
-      Properties:
-        Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
         GroupId: !Ref WorkerNodeSecurityGroup
-        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
-        IpProtocol: tcp
-        FromPort: 1025
+        IpProtocol: "-1"
+        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
         ToPort: 65535
 
-    AllowTCPOutboundFromEKSClusterToWorkerNodes:
-      Type: AWS::EC2::SecurityGroupEgress
+    EKSClusterSecurityGroupIngress:
+      Type: "AWS::EC2::SecurityGroupIngress"
+      DependsOn: WorkerNodeSecurityGroup
+      Properties:
+        Description: Allow pods to communicate with the cluster API Server
+        FromPort: 443
+        GroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: tcp
+        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        ToPort: 443
+
+    ControlPlaneEgressToWorkerNodeSecurityGroup:
+      Type: "AWS::EC2::SecurityGroupEgress"
+      DependsOn: WorkerNodeSecurityGroup
       Properties:
         Description: Allow the cluster control plane to communicate with worker Kubelet and pods
-        GroupId: !Ref EKSClusterSecurityGroup
-        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
-        IpProtocol: tcp
+        DestinationSecurityGroupId: !Ref WorkerNodeSecurityGroup
         FromPort: 1025
+        GroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: tcp
         ToPort: 65535
 
-    AllowHTTPInboundToWorkerNodesFromEKSCluster:
-      Type: AWS::EC2::SecurityGroupIngress
+    ControlPlaneEgressToWorkerNodeSecurityGroupOn443:
+      Type: "AWS::EC2::SecurityGroupEgress"
+      DependsOn: WorkerNodeSecurityGroup
       Properties:
-        Description: Allow pods running extension API servers on port 80 to receive communication from cluster control plane
+        Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
+        DestinationSecurityGroupId: !Ref WorkerNodeSecurityGroup
+        FromPort: 443
+        GroupId: !Ref EKSClusterSecurityGroup
+        IpProtocol: tcp
+        ToPort: 443
+
+    WorkerNodeSecurityGroupFromControlPlaneIngress:
+      Type: "AWS::EC2::SecurityGroupIngress"
+      DependsOn: WorkerNodeSecurityGroup
+      Properties:
+        Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
+        FromPort: 1025
         GroupId: !Ref WorkerNodeSecurityGroup
+        IpProtocol: tcp
         SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
-        IpProtocol: tcp
-        FromPort: 80
-        ToPort: 443
+        ToPort: 65535
 
-    AllowHTTPOutboundFromEKSClusterToWorkerNodes:
-      Type: AWS::EC2::SecurityGroupEgress
+    WorkerNodeSecurityGroupFromControlPlaneOn443Ingress:
+      Type: "AWS::EC2::SecurityGroupIngress"
+      DependsOn: WorkerNodeSecurityGroup
       Properties:
-        Description: Allow the cluster control plane to communicate with pods running extension API servers on port 80
-        GroupId: !Ref EKSClusterSecurityGroup
-        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
-        IpProtocol: tcp
-        FromPort: 80
-        ToPort: 443
-
-    AllowHTTPInboundToEKSClusterFromWorkerNodes:
-      Type: AWS::EC2::SecurityGroupIngress
-      Properties:
-        Description: Allow pods to communicate with the cluster API Server
-        GroupId: !Ref EKSClusterSecurityGroup
-        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
-        IpProtocol: tcp
-        ToPort: 443
-        FromPort: 80
-
-    AllowInboundTrafficFromEKSClustertoEKSCluster:
-      Type: AWS::EC2::SecurityGroupIngress
-      Properties:
-        Description: Allow pods to communicate with the cluster API Server
-        GroupId: !Ref EKSClusterSecurityGroup
-        SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
-        IpProtocol: -1
-        ToPort: 0
-        FromPort: 65535
-
-    AllowOutboundTrafficFromEKSClustertoEKSCluster:
-      Type: AWS::EC2::SecurityGroupEgress
-      Properties:
-        Description: Allow pods to communicate with the cluster API Server
-        GroupId: !Ref EKSClusterSecurityGroup
-        SourceSecurityGroupId: !Ref WorkerNodeSecurityGroup
-        IpProtocol: -1
-        ToPort: 0
-        FromPort: 65535
-
-    AllowOutboundTrafficFromWorknoetoOutside:
-      Type: AWS::EC2::SecurityGroupEgress
-      Properties:
-        Description: Allow pods to communicate with the cluster API Server
+        Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
+        FromPort: 443
         GroupId: !Ref WorkerNodeSecurityGroup
+        IpProtocol: tcp
         SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
-        IpProtocol: -1
-        ToPort: 22
-        FromPort: 65000
+        ToPort: 443
 
     WorkerNodeLaunchConfig:
       Type: AWS::AutoScaling::LaunchConfiguration
@@ -475,33 +451,38 @@ Resources:
               VolumeSize: 10
               VolumeType: gp2
               DeleteOnTermination: true
-        UserData:
-          Fn::Base64:
-            !Sub |
-              - #!/bin/bash -xe
-              /etc/eks/bootstrap.sh --apiserver-endpoint ${EKSCluster.Endpoint} --b64-cluster-ca ${EKSCluster.CertificateAuthorityData} ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
+        UserData: !Base64
+          "Fn::Sub": |
+            #!/bin/bash
+            set -o xtrace
+            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${BootstrapArguments}
+            /opt/aws/bin/cfn-signal --exit-code $? \
+                     --stack  ${AWS::StackName} \
+                     --resource NodeGroup  \
+                     --region ${AWS::Region}
 
-#    WorkerNodeGroup:
-#      Type: AWS::AutoScaling::AutoScalingGroup
-#      Properties:
-#        DesiredCapacity: 2
-#        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-#        MinSize: 2
-#        MaxSize: 3
-#        VPCZoneIdentifier:
-#            - !Ref PrivateSubnet1
-#            - !Ref PrivateSubnet2
-#        Tags:
-#        - Key: Name
-#          Value: !Sub "${EKSCluster}-Worker-Node"
-#          PropagateAtLaunch: 'true'
-#        - Key: !Sub 'kubernetes.io/cluster/${EKSCluster}'
-#          Value: 'owned'
-#          PropagateAtLaunch: 'true'
-#      UpdatePolicy:
-#        AutoScalingRollingUpdate:
-#          MaxBatchSize: '1'
-#          MinInstancesInService: 1
+    WorkerNodeGroup:
+      Type: AWS::AutoScaling::AutoScalingGroup
+      Properties:
+        DesiredCapacity: 2
+        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
+        MinSize: 2
+        MaxSize: 3
+        VPCZoneIdentifier:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+        Tags:
+        - Key: Name
+          Value: !Sub "${EKSCluster}-Worker-Node"
+          PropagateAtLaunch: 'true'
+        - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
+          Value: 'owned'
+          PropagateAtLaunch: 'true'
+      UpdatePolicy:
+        AutoScalingRollingUpdate:
+          MaxBatchSize: '1'
+          MinInstancesInService: 1
+          PauseTime: PT5M
 
 
 Outputs:
