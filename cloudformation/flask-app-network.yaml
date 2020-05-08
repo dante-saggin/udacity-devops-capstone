@@ -477,7 +477,7 @@ Resources:
           "Fn::Sub": |
             #!/bin/bash
             set -o xtrace
-            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${BootstrapArguments}
+            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
             /opt/aws/bin/cfn-signal --exit-code $? \
                      --stack  ${AWS::StackName} \
                      --resource NodeGroup  \
