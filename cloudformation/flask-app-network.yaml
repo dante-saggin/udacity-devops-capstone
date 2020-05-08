@@ -500,8 +500,10 @@ Resources:
           PropagateAtLaunch: 'true'
         - Key: !Sub 'k8s.io/cluster-autoscaler/${AWS::StackName}-EKS-Cluster'
           Value: 'owned'
+          PropagateAtLaunch: 'true'
         - Key: eks:cluster-name
           Value: !Sub '${AWS::StackName}-EKS-Cluster'
+          PropagateAtLaunch: 'true'
       UpdatePolicy:
         AutoScalingRollingUpdate:
           MaxBatchSize: '1'
