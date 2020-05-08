@@ -358,6 +358,8 @@ Resources:
           Value: 'owned'
         - Key: 'Name'
           Value: !Join [ "", [ !Ref 'AWS::StackName', "-EKS-Worker-Node-Security-Group" ] ]
+        - Key: eks:nodegroup-name
+          Value: 'WorkerNodeGroup'
 
     AllowInboundTrafficToWorkerNodesFromWorkerNodes:
       Type: AWS::EC2::SecurityGroupIngress
@@ -464,9 +466,9 @@ Resources:
     WorkerNodeGroup:
       Type: AWS::AutoScaling::AutoScalingGroup
       Properties:
-        DesiredCapacity: 2
+        DesiredCapacity: 1
         LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 2
+        MinSize: 1
         MaxSize: 3
         VPCZoneIdentifier:
             - !Ref PrivateSubnet1
@@ -478,6 +480,12 @@ Resources:
         - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
           Value: 'owned'
           PropagateAtLaunch: 'true'
+        - Key: !Sub 'k8s.io/cluster-autoscaler/${AWS::StackName}-EKS-Cluster'
+          Value: 'owned'
+        - Key: 'eks:nodegroup-name'
+          Value: 'WorkerNodeGroup'
+        - Key: eks:cluster-name
+          Value: !Sub '${AWS::StackName}-EKS-Cluster'
       UpdatePolicy:
         AutoScalingRollingUpdate:
           MaxBatchSize: '1'
