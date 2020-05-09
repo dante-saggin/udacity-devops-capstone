@@ -319,7 +319,7 @@ Resources:
             - !Ref PrivateSubnet1
             - !Ref PrivateSubnet2
         RoleArn: !GetAtt EKSClusterInstanceRole.Arn
-        Version: 1.15
+        Version: 1.16
 
     WorkerNodeInstanceProfile:
       Type: AWS::IAM::InstanceProfile
