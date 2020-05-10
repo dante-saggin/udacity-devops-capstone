@@ -72,6 +72,8 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Ref EnvironmentName
+                - Key: !Sub "kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster"
+                  Value: shared
 
     InternetGateway:
         Type: AWS::EC2::InternetGateway
@@ -447,9 +449,9 @@ Resources:
         NodegroupName: WorkerNodeGroup
         NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
         ScalingConfig:
-            DesiredSize: 1
+            DesiredSize: 0
             MaxSize: 2
-            MinSize: 1
+            MinSize: 0
         Subnets:
            - !Ref PrivateSubnet1
            - !Ref PrivateSubnet2
@@ -486,9 +488,9 @@ Resources:
     WorkerNodeGroup:
       Type: AWS::AutoScaling::AutoScalingGroup
       Properties:
-        DesiredCapacity: 1
+        DesiredCapacity: 0
         LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 1
+        MinSize: 0
         MaxSize: 3
         VPCZoneIdentifier:
             - !Ref PrivateSubnet1
