@@ -1,7 +1,7 @@
 # udacity-devops-capstone
 Udacity devops capstone
 
-The cloudformation script will create the infrastructure base it can be found at.
+The cloudformation script will create the infrastructure base, I have a shell script to simplify the executinon and it can found at.
 ```
 $./cloudformation/upsert-stack.sh
 ```
@@ -13,10 +13,13 @@ $./cloudformation/upsert-stack.sh
 ## Cloud Formation Itens Created
 ![img-1](./screenshot/3-ItensCreatedByCloudFormation.png)
 
-As part of the initial setup I deployed the first version of the code in the EKS cluster
+After the execution of the cloudformation script it's necessary check and deploy the initial revision into the EKS Cluster
+### Checking EKS and doing the First deployment.
 ![img-1](./screenshot/4-FirstTestGettingVersion1Deployed.png)
 
-Creating the pipeline in the Jenkins to execute it should deploy the v2 using a blue/green strategy, more info on how this strategy work can be found on [Kubernetes-Resources Read me](./kubernetes-resources/)
+Creating the pipeline in the Jenkins to execute it should deploy the v2 using a blue/green strategy,
+more info on how this strategy work can be found on [Kubernetes-Resources Read me](./kubernetes-resources/)
+the revision to deploy and the revision to rollback are controled by the files revision and versionToRollback in the deployments folder
 
 ### upload docker image
 ![img-1](./screenshot/5-JenkinsPrint1.png)
@@ -31,7 +34,6 @@ After the deployment the image will be uploaded into docker hub
 And the version will return v2 into the /ping
 ![img-1](./screenshot/9-TestingAfterDeployment.png)
 
+A resume of all deployed resources at the end of the process.
+
 ![img-1](./screenshot/10-AllResourcesAfterDeployment.png)
-
-
-**In order to control the version to be deployed and the version to rollback we have the files revision and versionToRollback in the deployments folder
