@@ -4,7 +4,7 @@ pipeline {
         CHECK_URL = "http://ad955ff762f1e4c1e9ed992d74e2ae7b-621277042.us-west-2.elb.amazonaws.com/ping" //LoadBalancer Url
         CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL} > STATUSCODE"
         VERSION = readFile('deployments/revision')
-        ROLLBACKTO = readFile('deployments/versionToRollback')
+        PREVIOUSVERSION = readFile('deployments/versionToRollback')
         STATUSCODE = 0
     }
     stages {
@@ -51,7 +51,7 @@ pipeline {
                 // sed -i "s/##Revision##/2/g" kubernetes-resources/deployment/deployment.yaml
                 sh 'sed -i "s/##Revision##/${VERSION}/g" kubernetes-resources/deployment/deployment.yaml'
                 sh 'sed -i "s/##Revision##/${VERSION}/g" kubernetes-resources/deployment/service-patch.yaml'
-                sh 'sed -i "s/##Revision##/${ROLLBACKTO}/g" kubernetes-resources/deployment/service-patch-rollback.yaml'
+                sh 'sed -i "s/##Revision##/${PREVIOUSVERSION}/g" kubernetes-resources/deployment/service-patch-rollback.yaml'
                 withAWS(region:'us-west-2',credentials:'aws-static') {
                     sh 'aws eks --region us-west-2 update-kubeconfig --name capstone-project-EKS-Cluster'
                     // In a future version let the version as a parameter getting and sed into the yaml and using the same as the docker file
@@ -73,7 +73,7 @@ pipeline {
                         echo "Deploy successfull"
                         withAWS(region:'us-west-2',credentials:'aws-static') {
                             sh 'aws eks --region us-west-2 update-kubeconfig --name capstone-project-EKS-Cluster'
-                            sh 'kubectl delete deployment flask-app-${ROLLBACKTO}'
+                            sh 'kubectl delete deployment flask-app-v${PREVIOUSVERSION}'
                             echo 'removing previous version'
                         }
                     }
