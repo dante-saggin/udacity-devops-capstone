@@ -437,7 +437,7 @@ Resources:
 
     WorkerNodes:
       Type: AWS::EKS::Nodegroup
-      DependsOn: WorkerNodeInstanceRole
+      DependsOn: EKSCluster
       Properties:
         AmiType: AL2_x86_64
         ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
