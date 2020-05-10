@@ -10,8 +10,7 @@ pipeline {
         stage('Lint') {
             steps {
                 script {
-                    sleep 60
-                    response = sh $(CMD)
+                    response = sh CMD
                     if (response == '200') {
                         echo "Deploy successfull"
 
@@ -77,7 +76,7 @@ pipeline {
         stage('SmokeTest') {
             steps {
                 script {
-                     sleep 60
+                    sleep 30
                     response = sh $(CMD)
                     if (response == '200') {
                         echo "Deploy successfull"
