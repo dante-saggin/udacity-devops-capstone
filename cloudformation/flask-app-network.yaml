@@ -435,74 +435,54 @@ Resources:
         SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
         ToPort: 443
 
-#    EKSNodegroup:
-#      Type: 'AWS::EKS::Nodegroup'
+#    WorkerNodeLaunchConfig:
+#      Type: AWS::AutoScaling::LaunchConfiguration
 #      Properties:
-#        ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
-#        NodeRole: !Ref WorkerNodeInstanceProfile
-#        DiskSize: 10
-#        AmiType: 'AL2_x86_64'
-#        InstanceTypes:
-#            - !Ref WorkerNodeInstanceType
-#        ScalingConfig:
-#          MinSize: 1
-#          DesiredSize: 1
-#          MaxSize: 4
-#        Subnets:
+#        AssociatePublicIpAddress: 'False'
+#        IamInstanceProfile: !Ref WorkerNodeInstanceProfile
+#        ImageId: !Ref WorkerNodeImageId
+#        InstanceType: !Ref WorkerNodeInstanceType
+#        KeyName: !Ref KeyName
+#        SecurityGroups:
+#        - !Ref WorkerNodeSecurityGroup
+#        BlockDeviceMappings:
+#          - DeviceName: /dev/xvda
+#            Ebs:
+#              VolumeSize: 10
+#              VolumeType: gp2
+#              DeleteOnTermination: true
+#        UserData: !Base64
+#          "Fn::Sub": |
+#            #!/bin/bash
+#            set -o xtrace
+#            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
+#            /opt/aws/bin/cfn-signal --exit-code $? \
+#                     --stack  ${AWS::StackName} \
+#                     --resource NodeGroup  \
+#                     --region ${AWS::Region}
+#
+#    WorkerNodeGroup:
+#      Type: AWS::AutoScaling::AutoScalingGroup
+#      Properties:
+#        DesiredCapacity: 1
+#        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
+#        MinSize: 1
+#        MaxSize: 3
+#        VPCZoneIdentifier:
 #            - !Ref PrivateSubnet1
 #            - !Ref PrivateSubnet2
 #        Tags:
-#         - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
-#           Value: 'owned'
-
-    WorkerNodeLaunchConfig:
-      Type: AWS::AutoScaling::LaunchConfiguration
-      Properties:
-        AssociatePublicIpAddress: 'False'
-        IamInstanceProfile: !Ref WorkerNodeInstanceProfile
-        ImageId: !Ref WorkerNodeImageId
-        InstanceType: !Ref WorkerNodeInstanceType
-        KeyName: !Ref KeyName
-        SecurityGroups:
-        - !Ref WorkerNodeSecurityGroup
-        BlockDeviceMappings:
-          - DeviceName: /dev/xvda
-            Ebs:
-              VolumeSize: 10
-              VolumeType: gp2
-              DeleteOnTermination: true
-        UserData: !Base64
-          "Fn::Sub": |
-            #!/bin/bash
-            set -o xtrace
-            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
-            /opt/aws/bin/cfn-signal --exit-code $? \
-                     --stack  ${AWS::StackName} \
-                     --resource NodeGroup  \
-                     --region ${AWS::Region}
-
-    WorkerNodeGroup:
-      Type: AWS::AutoScaling::AutoScalingGroup
-      Properties:
-        DesiredCapacity: 1
-        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 1
-        MaxSize: 3
-        VPCZoneIdentifier:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-        Tags:
-        - Key: Name
-          Value: !Sub "${EKSCluster}-Worker-Node"
-          PropagateAtLaunch: 'true'
-        - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
-          Value: 'owned'
-          PropagateAtLaunch: 'true'
-      UpdatePolicy:
-        AutoScalingRollingUpdate:
-          MaxBatchSize: '1'
-          MinInstancesInService: 1
-          PauseTime: PT5M
+#        - Key: Name
+#          Value: !Sub "${EKSCluster}-Worker-Node"
+#          PropagateAtLaunch: 'true'
+#        - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
+#          Value: 'owned'
+#          PropagateAtLaunch: 'true'
+#      UpdatePolicy:
+#        AutoScalingRollingUpdate:
+#          MaxBatchSize: '1'
+#          MinInstancesInService: 1
+#          PauseTime: PT5M
 
 
 Outputs:
