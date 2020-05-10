@@ -9,12 +9,12 @@ spec:
   selector:
     matchLabels:
       app: flask-app
-      version: v2.0.0
+      version: v2
   template:
     metadata:
       labels:
         app: flask-app
-        version: v2.0.0
+        version: v2
     spec:
       containers:
         - name: app

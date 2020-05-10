@@ -1,6 +1,6 @@
   commonLabels:
     app: flask-app
-    version: v1.0.0
+    version: v1
   resources:
     - deployment.yaml
     - service.yaml
