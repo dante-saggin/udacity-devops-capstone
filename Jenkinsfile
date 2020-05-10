@@ -10,7 +10,7 @@ pipeline {
         stage('Lint') {
             steps {
                 // Will lint python code and Dockerfile
-                sh 'hadolint app/v${VERSION}/Dockerfile'
+                sh 'hadolint app/Dockerfile'
                 sh '''
                 cd app
                 sh 'sed -i "s/###Version###/${VERSION}/g" app.py'
