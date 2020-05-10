@@ -41,7 +41,7 @@
     },
     {
     	"ParameterKey": "WorkerNodeInstanceType",
-        "ParameterValue": "t2.micro"
+        "ParameterValue": "t3.micro"
     },
     {
     	"ParameterKey": "WorkerNodeBootstrapArguments",
