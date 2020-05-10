@@ -3,12 +3,14 @@ pipeline {
     environment {
         CHECK_URL = "https://myurl.com/ping" //LoadBalancer Url
         CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL}"
-        VERSION = "2" // TODO: externilize this into a separeted file
-        ROLLBACKTO = "1" //TODO: Get the active deployment version
+        VERSION = "0" // TODO: externilize this into a separeted file
+        ROLLBACKTO = "0" //TODO: Get the active deployment version
     }
     stages {
         stage('Lint') {
             steps {
+                VERSION = sh cat revision
+                ROLLBACKTO = sh cat versionToRollback
                 // Will lint python code and Dockerfile
                 sh 'hadolint app/v${VERSION}/Dockerfile'
                 sh '''
