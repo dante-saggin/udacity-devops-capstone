@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        CHECK_URL = "http://a63463eba1cff49f6b4ab50e5b02de3e-835803204.us-west-2.elb.amazonaws.com/ping" //LoadBalancer Url
+        CHECK_URL = "http://ad955ff762f1e4c1e9ed992d74e2ae7b-621277042.us-west-2.elb.amazonaws.com/ping" //LoadBalancer Url
         CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL}"
         VERSION = readFile('deployments/revision')
         ROLLBACKTO = readFile('deployments/versionToRollback')
@@ -47,6 +47,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 // It will upload the docker registry in order to be used later by kubernetes
+                // sed -i "s/##Revision##/2/g" kubernetes-resources/deployment/deployment.yaml
                 sh 'sed -i "s/##Revision##/${VERSION}/g" kubernetes-resources/deployment/deployment.yaml'
                 sh 'sed -i "s/##Revision##/${VERSION}/g" kubernetes-resources/deployment/service-patch.yaml'
                 sh 'sed -i "s/##Revision##/${ROLLBACKTO}/g" kubernetes-resources/deployment/service-patch-rollback.yaml'
