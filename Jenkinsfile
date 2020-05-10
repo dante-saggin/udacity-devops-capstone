@@ -11,7 +11,8 @@ pipeline {
             steps {
                 script {
                     response = sh CMD
-                    if (response == '200') {
+                    echo "response: ${response}"
+                    if (response == 200) {
                         echo "Deploy successfull"
 
                     }
