@@ -3,8 +3,8 @@ pipeline {
     environment {
         CHECK_URL = "https://myurl.com/ping" //LoadBalancer Url
         CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL}"
-        VERSION = readFile('kubernetes-resources/deployment/revision') // TODO: externilize this into a separeted file
-        ROLLBACKTO = readFile('kubernetes-resources/deployment/versionToRollback') //TODO: Get the active deployment version
+        VERSION = readFile('deployments/revision')
+        ROLLBACKTO = readFile('deployments/versionToRollback')
     }
     stages {
         stage('Lint') {
@@ -30,6 +30,7 @@ pipeline {
         stage('Build') {
             steps {
                 // Will build the image
+                sh 'ls -tlra ./deployments/v${VERSION}'
                 sh 'docker build --tag=flask-app:v${VERSION} ./deployments/v${VERSION}'
             }
         }
