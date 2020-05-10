@@ -449,7 +449,7 @@ Resources:
         NodegroupName: WorkerNodeGroup
         NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
         ScalingConfig:
-            DesiredSize: 0
+            DesiredSize: 1
             MaxSize: 2
             MinSize: 1
         Subnets:
@@ -488,7 +488,7 @@ Resources:
     WorkerNodeGroup:
       Type: AWS::AutoScaling::AutoScalingGroup
       Properties:
-        DesiredCapacity: 0
+        DesiredCapacity: 1
         LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
         MinSize: 1
         MaxSize: 3
