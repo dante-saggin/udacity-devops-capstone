@@ -256,19 +256,19 @@ Resources:
                 ToPort: 65535
                 CidrIp: 0.0.0.0/0
 
-    BastionInstance:
-        Type: "AWS::EC2::Instance"
-        DependsOn: BastionSecurityGroup
-        Properties:
-            InstanceType: !Ref BastionInstanceType
-            ImageId: !Ref BastionImageID
-            KeyName: !Ref KeyName
-            NetworkInterfaces:
-              - AssociatePublicIpAddress: "true"
-                DeviceIndex: "0"
-                SubnetId: !Ref PublicSubnet1
-                GroupSet:
-                - !Ref BastionSecurityGroup
+#    BastionInstance:
+#        Type: "AWS::EC2::Instance"
+#        DependsOn: BastionSecurityGroup
+#        Properties:
+#            InstanceType: !Ref BastionInstanceType
+#            ImageId: !Ref BastionImageID
+#            KeyName: !Ref KeyName
+#            NetworkInterfaces:
+#              - AssociatePublicIpAddress: "true"
+#                DeviceIndex: "0"
+#                SubnetId: !Ref PublicSubnet1
+#                GroupSet:
+#                - !Ref BastionSecurityGroup
 
     EKSClusterInstanceProfile:
       Type: AWS::IAM::InstanceProfile
@@ -435,54 +435,76 @@ Resources:
         SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
         ToPort: 443
 
-    WorkerNodeLaunchConfig:
-      Type: AWS::AutoScaling::LaunchConfiguration
-      Properties:
-        AssociatePublicIpAddress: 'False'
-        IamInstanceProfile: !Ref WorkerNodeInstanceProfile
-        ImageId: !Ref WorkerNodeImageId
-        InstanceType: !Ref WorkerNodeInstanceType
-        KeyName: !Ref KeyName
-        SecurityGroups:
-        - !Ref WorkerNodeSecurityGroup
-        BlockDeviceMappings:
-          - DeviceName: /dev/xvda
-            Ebs:
-              VolumeSize: 10
-              VolumeType: gp2
-              DeleteOnTermination: true
-        UserData: !Base64
-          "Fn::Sub": |
-            #!/bin/bash
-            set -o xtrace
-            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
-            /opt/aws/bin/cfn-signal --exit-code $? \
-                     --stack  ${AWS::StackName} \
-                     --resource NodeGroup  \
-                     --region ${AWS::Region}
-
-    WorkerNodeGroup:
-      Type: AWS::AutoScaling::AutoScalingGroup
-      Properties:
-        DesiredCapacity: 1
-        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 1
-        MaxSize: 3
-        VPCZoneIdentifier:
-            - !Ref PrivateSubnet1
-            - !Ref PrivateSubnet2
-        Tags:
-        - Key: Name
-          Value: !Sub "${EKSCluster}-Worker-Node"
-          PropagateAtLaunch: 'true'
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      AmiType: AL2_x86_64
+      ClusterName: !Ref ${AWS::StackName}-EKS-Cluster
+      DiskSize: 10
+      InstanceTypes:
+        - !Ref WorkerNodeInstanceType
+      NodegroupName: WorkerNodeGroup
+      NodeRole: !Ref WorkerNodeInstanceRole
+      ReleaseVersion: 1.15.11-20200423
+      ScalingConfig:
+          DesiredSize: 1
+          MaxSize: 2
+          MinSize: 1
+      Subnets:
+         - !Ref PrivateSubnet1
+         - !Ref PrivateSubnet2
+      Tags:
         - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
           Value: 'owned'
           PropagateAtLaunch: 'true'
-      UpdatePolicy:
-        AutoScalingRollingUpdate:
-          MaxBatchSize: '1'
-          MinInstancesInService: 1
-          PauseTime: PT5M
+
+#    WorkerNodeLaunchConfig:
+#      Type: AWS::AutoScaling::LaunchConfiguration
+#      Properties:
+#        AssociatePublicIpAddress: 'False'
+#        IamInstanceProfile: !Ref WorkerNodeInstanceProfile
+#        ImageId: !Ref WorkerNodeImageId
+#        InstanceType: !Ref WorkerNodeInstanceType
+#        KeyName: !Ref KeyName
+#        SecurityGroups:
+#        - !Ref WorkerNodeSecurityGroup
+#        BlockDeviceMappings:
+#          - DeviceName: /dev/xvda
+#            Ebs:
+#              VolumeSize: 10
+#              VolumeType: gp2
+#              DeleteOnTermination: true
+#        UserData: !Base64
+#          "Fn::Sub": |
+#            #!/bin/bash
+#            set -o xtrace
+#            /etc/eks/bootstrap.sh ${AWS::StackName}-EKS-Cluster ${WorkerNodeBootstrapArguments}
+#            /opt/aws/bin/cfn-signal --exit-code $? \
+#                     --stack  ${AWS::StackName} \
+#                     --resource NodeGroup  \
+#                     --region ${AWS::Region}
+#
+#    WorkerNodeGroup:
+#      Type: AWS::AutoScaling::AutoScalingGroup
+#      Properties:
+#        DesiredCapacity: 1
+#        LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
+#        MinSize: 1
+#        MaxSize: 3
+#        VPCZoneIdentifier:
+#            - !Ref PrivateSubnet1
+#            - !Ref PrivateSubnet2
+#        Tags:
+#        - Key: Name
+#          Value: !Sub "${EKSCluster}-Worker-Node"
+#          PropagateAtLaunch: 'true'
+#        - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
+#          Value: 'owned'
+#          PropagateAtLaunch: 'true'
+#      UpdatePolicy:
+#        AutoScalingRollingUpdate:
+#          MaxBatchSize: '1'
+#          MinInstancesInService: 1
+#          PauseTime: PT5M
 
 Outputs:
 
@@ -492,9 +514,9 @@ Outputs:
         Export:
           Name: !Sub ${EnvironmentName}-VPCID
 
-    BastionInstance:
-        Description: Bastion Instance adress to enable debuging into the instances in the private network
-        Value: !GetAtt BastionInstance.PublicIp
+#    BastionInstance:
+#        Description: Bastion Instance adress to enable debuging into the instances in the private network
+#        Value: !GetAtt BastionInstance.PublicIp
 
     PublicSubnets:
         Description: A list of the public subnets
