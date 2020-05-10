@@ -69,7 +69,7 @@ pipeline {
                 }
             }
         }
-        stage("Cleaning Docker up") {
+        stage("CleaningDocker") {
             steps {
                 script {
                     sh "echo 'Cleaning Docker up'"
