@@ -446,7 +446,6 @@ Resources:
           - !Ref WorkerNodeInstanceType
         NodegroupName: WorkerNodeGroup
         NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
-        ReleaseVersion: 1.15.11-20200423
         ScalingConfig:
             DesiredSize: 1
             MaxSize: 2
