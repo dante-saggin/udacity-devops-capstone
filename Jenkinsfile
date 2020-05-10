@@ -12,8 +12,8 @@ pipeline {
                 // Will lint python code and Dockerfile
                 sh 'hadolint app/Dockerfile'
                 sh '''
-                cd app
-                sh 'sed -i "s/###Version###/${VERSION}/g" app.py'
+                cd ./app
+                sed -i "s/###Version###/${VERSION}/g" app.py
                 python3 -m venv venv
                 . venv/bin/activate
                 pip install --upgrade pip &&\
