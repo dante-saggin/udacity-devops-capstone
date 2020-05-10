@@ -11,9 +11,9 @@ pipeline {
         stage('Lint') {
             steps {
                 script {
-                    response = sh CMD
+                    sh CMD
                     response = readFile("STATUSCODE")
-                    if (${response} == 200) {
+                    if (response == '200') {
                         echo "Deploy successfull"
                     }
                     else {
