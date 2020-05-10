@@ -435,27 +435,28 @@ Resources:
         SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
         ToPort: 443
 
-    Type: AWS::EKS::Nodegroup
-    Properties:
-      AmiType: AL2_x86_64
-      ClusterName: !Ref ${AWS::StackName}-EKS-Cluster
-      DiskSize: 10
-      InstanceTypes:
-        - !Ref WorkerNodeInstanceType
-      NodegroupName: WorkerNodeGroup
-      NodeRole: !Ref WorkerNodeInstanceRole
-      ReleaseVersion: 1.15.11-20200423
-      ScalingConfig:
-          DesiredSize: 1
-          MaxSize: 2
-          MinSize: 1
-      Subnets:
-         - !Ref PrivateSubnet1
-         - !Ref PrivateSubnet2
-      Tags:
-        - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
-          Value: 'owned'
-          PropagateAtLaunch: 'true'
+    WorkerNodes:
+      Type: AWS::EKS::Nodegroup
+      Properties:
+        AmiType: AL2_x86_64
+        ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
+        DiskSize: 10
+        InstanceTypes:
+          - !Ref WorkerNodeInstanceType
+        NodegroupName: WorkerNodeGroup
+        NodeRole: !Ref WorkerNodeInstanceRole
+        ReleaseVersion: 1.15.11-20200423
+        ScalingConfig:
+            DesiredSize: 1
+            MaxSize: 2
+            MinSize: 1
+        Subnets:
+           - !Ref PrivateSubnet1
+           - !Ref PrivateSubnet2
+        Tags:
+          - Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
+            Value: 'owned'
+            PropagateAtLaunch: 'true'
 
 #    WorkerNodeLaunchConfig:
 #      Type: AWS::AutoScaling::LaunchConfiguration
