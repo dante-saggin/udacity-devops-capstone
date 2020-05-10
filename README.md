@@ -15,7 +15,7 @@ $./cloudformation/upsert-stack.sh
 As part of the initial setup I deployed the first version of the code in the EKS cluster
 ![img-1](./screenshot/4-FirstTestGettingVersion1Deployed.png)
 
-Creating the pipeline in the Jenkins to execute it should deploy the v2**
+Creating the pipeline in the Jenkins to execute it should deploy the v2 using a green blue strategy, more info on how this strategy work can be found on [a relative link](./kubernetes-resources/README.md)
 ![img-1](./screenshot/5-JenkinsPrint1.png)
 ![img-1](./screenshot/6-JenkinsPrint2.png)
 ![img-1](./screenshot/7-JenkinsPrint3.png)
