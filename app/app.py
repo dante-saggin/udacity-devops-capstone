@@ -11,7 +11,7 @@ LOG.setLevel(logging.INFO)
 def ping():
     return jsonify(
             status="ok",
-            version="v1"
+            version="v###Version###"
         )
 
 @app.route("/mini-game/<name>", methods=['GET'])

@@ -12,13 +12,17 @@ pipeline {
                 // Will lint python code and Dockerfile
                 sh 'hadolint app/v${VERSION}/Dockerfile'
                 sh '''
-                cd app/v${VERSION}
+                cd app
+                sh 'sed -i "s/###Version###/${VERSION}/g" app.py'
                 python3 -m venv venv
                 . venv/bin/activate
                 pip install --upgrade pip &&\
                         pip install -r requirements.txt
                 pylint --disable=R,C,W1203,W1309 app.py
                 deactivate
+                cd ../deployments
+                mkdir v${VERSION}
+                cp -R ../app/* v${VERSION}
                 cd ..
                 '''
             }
@@ -26,7 +30,7 @@ pipeline {
         stage('Build') {
             steps {
                 // Will build the image
-                sh 'docker build --tag=flask-app:v${VERSION} ./app/v${VERSION}'
+                sh 'docker build --tag=flask-app:v${VERSION} ./deployments/v${VERSION}'
             }
         }
         stage('Upload') {
