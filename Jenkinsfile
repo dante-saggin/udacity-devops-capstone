@@ -2,17 +2,18 @@ pipeline {
     agent any
     environment {
         CHECK_URL = "http://ad955ff762f1e4c1e9ed992d74e2ae7b-621277042.us-west-2.elb.amazonaws.com/ping" //LoadBalancer Url
-        CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL} > statusCode"
+        CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL} > STATUSCODE"
         VERSION = readFile('deployments/revision')
         ROLLBACKTO = readFile('deployments/versionToRollback')
+        STATUSCODE = 0
     }
     stages {
         stage('Lint') {
             steps {
                 script {
                     response = sh CMD
-                    response = readFile(statusCode)
-                    echo "test"
+                    response = readFile(STATUSCODE)
+                    echo "${STATUSCODE}"
                     echo "response: ${response}"
                     if (response == 200) {
                         echo "Deploy successfull"
