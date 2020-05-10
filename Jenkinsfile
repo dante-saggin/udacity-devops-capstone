@@ -12,9 +12,10 @@ pipeline {
             steps {
                 script {
                     response = sh CMD
-                    response = readFile(STATUSCODE)
                     echo "${STATUSCODE}"
-                    echo "response: ${response}"
+                    echo "response1: ${response}"
+                    response = readFile(STATUSCODE)
+                    echo "response2: ${response}"
                     if (response == 200) {
                         echo "Deploy successfull"
 
