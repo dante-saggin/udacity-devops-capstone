@@ -54,7 +54,7 @@ pipeline {
                 script {
                     sleep 60
                     response = $(CMD)
-                    if (env.status = '200') {
+                    if (response = '200') {
                         echo "Deploy successfull"
                     }
                     else {
