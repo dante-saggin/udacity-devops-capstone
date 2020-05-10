@@ -437,26 +437,26 @@ Resources:
         SourceSecurityGroupId: !Ref EKSClusterSecurityGroup
         ToPort: 443
 
-    WorkerNodes:
-      Type: AWS::EKS::Nodegroup
-      DependsOn: EKSCluster
-      Properties:
-        AmiType: AL2_x86_64
-        ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
-        DiskSize: 20
-        InstanceTypes:
-          - !Ref WorkerNodeInstanceType
-        NodegroupName: WorkerNodeGroup
-        NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
-        ScalingConfig:
-            DesiredSize: 1
-            MaxSize: 2
-            MinSize: 1
-        Subnets:
-           - !Ref PrivateSubnet1
-           - !Ref PrivateSubnet2
-        Tags:
-            'kubernetes.io/cluster/capstone-project-EKS-Cluster': 'owned'
+#    WorkerNodes:
+#      Type: AWS::EKS::Nodegroup
+#      DependsOn: EKSCluster
+#      Properties:
+#        AmiType: AL2_x86_64
+#        ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
+#        DiskSize: 20
+#        InstanceTypes:
+#          - !Ref WorkerNodeInstanceType
+#        NodegroupName: WorkerNodeGroup
+#        NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
+#        ScalingConfig:
+#            DesiredSize: 1
+#            MaxSize: 2
+#            MinSize: 1
+#        Subnets:
+#           - !Ref PrivateSubnet1
+#           - !Ref PrivateSubnet2
+#        Tags:
+#            'kubernetes.io/cluster/capstone-project-EKS-Cluster': 'owned'
 
 
     WorkerNodeLaunchConfig:
@@ -488,9 +488,9 @@ Resources:
     WorkerNodeGroup:
       Type: AWS::AutoScaling::AutoScalingGroup
       Properties:
-        DesiredCapacity: 1
+        DesiredCapacity: 2
         LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 1
+        MinSize: 2
         MaxSize: 3
         VPCZoneIdentifier:
             - !Ref PrivateSubnet1
