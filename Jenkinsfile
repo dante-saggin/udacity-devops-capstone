@@ -13,10 +13,8 @@ pipeline {
                 script {
                     response = sh CMD
                     response = readFile("STATUSCODE")
-                    echo "response2: ${response}"
-                    if (response == 200) {
+                    if ($response == 200) {
                         echo "Deploy successfull"
-
                     }
                     else {
                         echo "Rollback Started"
