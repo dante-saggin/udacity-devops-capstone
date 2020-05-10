@@ -52,16 +52,16 @@ pipeline {
         stage('SmokeTest') {
             steps {
                 script {
-                    sleep 60
-                    response = $(CMD)
-                    if (response = '200') {
-                        echo "Deploy successfull"
-                    }
-                    else {
-                        echo "Rollback Started"
-                        sh 'kubectl patch service flask-app --patch "$(cat ./kubernetes-resources/deployment/service-patch.yaml)"'
-                        exit 1
-                    }
+                     sleep 60
+//                    response = $(CMD)
+//                    if (response = '200') {
+//                        echo "Deploy successfull"
+//                    }
+//                    else {
+//                        echo "Rollback Started"
+//                        sh 'kubectl patch service flask-app --patch "$(cat ./kubernetes-resources/deployment/service-patch.yaml)"'
+//                        exit 1
+//                    }
                 }
             }
         }
