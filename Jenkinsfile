@@ -12,6 +12,7 @@ pipeline {
                 script {
                     sh CMD > statusCode
                     response = readFile(statusCode)
+                    echo "test"
                     echo "response: ${response}"
                     if (response == 200) {
                         echo "Deploy successfull"
