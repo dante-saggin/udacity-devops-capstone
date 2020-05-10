@@ -437,6 +437,7 @@ Resources:
 
     WorkerNodes:
       Type: AWS::EKS::Nodegroup
+      DependsOn: WorkerNodeInstanceRole
       Properties:
         AmiType: AL2_x86_64
         ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
@@ -444,7 +445,7 @@ Resources:
         InstanceTypes:
           - !Ref WorkerNodeInstanceType
         NodegroupName: WorkerNodeGroup
-        NodeRole: !Ref WorkerNodeInstanceRole
+        NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
         ReleaseVersion: 1.15.11-20200423
         ScalingConfig:
             DesiredSize: 1
