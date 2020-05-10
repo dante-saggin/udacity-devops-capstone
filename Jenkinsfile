@@ -28,7 +28,7 @@ pipeline {
         stage('Upload') {
             steps {
                 // It will upload the docker registry in order to be used later by kubernetes //url: ""
-                withDockerRegistry([ credentialsId: 'dockerId', url:  ]) {
+                withDockerRegistry([ credentialsId: 'dockerId', url: '' ]) {
                     sh 'docker tag flask-app:v2 dantesaggin/flask-app:v2'
                     sh 'docker push dantesaggin/flask-app:v2'
                 }
