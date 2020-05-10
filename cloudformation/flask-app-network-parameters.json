@@ -37,7 +37,7 @@
     },
     {
     	"ParameterKey": "WorkerNodeImageId",
-        "ParameterValue": "ami-0ac376dde98c141d0"
+        "ParameterValue": "ami-026522559b4f79cc8"
     },
     {
     	"ParameterKey": "WorkerNodeInstanceType",
