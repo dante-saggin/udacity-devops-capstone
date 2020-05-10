@@ -12,9 +12,10 @@ pipeline {
 
                 script {
                     echo "Before Script"
-                    VERSION = 'cat kubernetes-resources/deployment/revision'
+                    a = 'cat kubernetes-resources/deployment/revision'
+                    env.VERSION = ${a}
                     ROLLBACKTO = 'cat cat kubernetes-resources/deployment/versionToRollback'
-                    echo "${VERSION} ${ROLLBACKTO}"
+                    echo "${VERSION} ${ROLLBACKTO} ${env.VERSION}"
                     echo "after Script"
                 }
                 // Will lint python code and Dockerfile
