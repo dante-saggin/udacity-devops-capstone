@@ -1,10 +1,11 @@
 # udacity-devops-capstone
 Udacity devops capstone
 
-Execution the script bellow it will create the required infrastructure
+The cloudformation script will create the infrastructure base it can be found at.
 ```
 $./cloudformation/upsert-stack.sh
 ```
+
 ## Cloud Formation Execution
 ![img-1](./screenshot/1-ExecuteCloudFormatonToCreateAll.png)
 ## Cloud Formation Console
