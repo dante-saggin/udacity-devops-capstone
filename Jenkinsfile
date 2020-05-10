@@ -10,17 +10,6 @@ pipeline {
     stages {
         stage('Lint') {
             steps {
-                script {
-                    sh CMD
-                    response = readFile("STATUSCODE")
-                    if (response == '200') {
-                        echo "Deploy successfull"
-                    }
-                    else {
-                        echo "Rollback Started"
-                        exit 1
-                    }
-                }
                 // Will lint python code and Dockerfile
                 sh 'hadolint app/Dockerfile'
                 sh '''
@@ -78,7 +67,8 @@ pipeline {
             steps {
                 script {
                     sleep 30
-                    response = sh $(CMD)
+                    sh CMD
+                    response = readFile("STATUSCODE")
                     if (response == '200') {
                         echo "Deploy successfull"
                         withAWS(region:'us-west-2',credentials:'aws-static') {
