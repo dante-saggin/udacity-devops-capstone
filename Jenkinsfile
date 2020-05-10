@@ -9,8 +9,10 @@ pipeline {
     stages {
         stage('Lint') {
             steps {
-                VERSION = sh cat revision
-                ROLLBACKTO = sh cat versionToRollback
+                script {
+                    env.VERSION = ${'cat kubernetes-resources/deployment/revision'}
+                    env.ROLLBACKTO = ${'cat cat kubernetes-resources/deployment/versionToRollback'}
+                }
                 // Will lint python code and Dockerfile
                 sh 'hadolint app/v${VERSION}/Dockerfile'
                 sh '''
