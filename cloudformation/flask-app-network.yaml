@@ -454,7 +454,8 @@ Resources:
            - !Ref PrivateSubnet1
            - !Ref PrivateSubnet2
         Tags:
-            !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster' : 'owned'
+            Key: !Sub 'kubernetes.io/cluster/${AWS::StackName}-EKS-Cluster'
+            Value: 'owned'
 
 #    WorkerNodeLaunchConfig:
 #      Type: AWS::AutoScaling::LaunchConfiguration
