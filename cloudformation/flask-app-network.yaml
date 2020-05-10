@@ -443,7 +443,7 @@ Resources:
       Properties:
         AmiType: AL2_x86_64
         ClusterName: !Sub ${AWS::StackName}-EKS-Cluster
-        DiskSize: 10
+        DiskSize: 20
         InstanceTypes:
           - !Ref WorkerNodeInstanceType
         NodegroupName: WorkerNodeGroup
@@ -472,7 +472,7 @@ Resources:
         BlockDeviceMappings:
           - DeviceName: /dev/xvda
             Ebs:
-              VolumeSize: 10
+              VolumeSize: 20
               VolumeType: gp2
               DeleteOnTermination: true
         UserData: !Base64
