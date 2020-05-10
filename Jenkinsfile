@@ -54,7 +54,7 @@ pipeline {
                     sh 'aws eks --region us-west-2 update-kubeconfig --name capstone-project-EKS-Cluster'
                     // In a future version let the version as a parameter getting and sed into the yaml and using the same as the docker file
                     sh 'kubectl apply -f kubernetes-resources/deployment/deployment.yaml'
-                    sh 'kubectl rollout status deploy flask-app-${VERSION} -w'
+                    sh 'kubectl rollout status deploy flask-app-v${VERSION} -w'
                     // Changing the Service
                     sh 'kubectl patch service flask-app --patch "$(cat ./kubernetes-resources/deployment/service-patch.yaml)"'
                 }
