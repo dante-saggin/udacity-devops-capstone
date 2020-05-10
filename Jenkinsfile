@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        CHECK_URL = "https://myurl.com/ping" //LoadBalancer Url
+        CHECK_URL = "http://a63463eba1cff49f6b4ab50e5b02de3e-835803204.us-west-2.elb.amazonaws.com/ping" //LoadBalancer Url
         CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL}"
         VERSION = readFile('deployments/revision')
         ROLLBACKTO = readFile('deployments/versionToRollback')
