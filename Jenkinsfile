@@ -1,10 +1,10 @@
 pipeline {
     agent any
     environment {
-        dockerhubCredentials = 'dockerhubCredentials'
         CHECK_URL = "https://myurl.com/ping" //LoadBalancer Url
         CMD = "curl --write-out %{http_code} --silent --output /dev/null ${CHECK_URL}"
-        VERSION = "2"
+        VERSION = "2" // TODO: externilize this into a separeted file
+        ROLLBACKTO = "1" //TODO: Get the active deployment version
     }
     stages {
         stage('Lint') {
@@ -42,6 +42,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 // It will upload the docker registry in order to be used later by kubernetes
+                sh 'sed -i "s/##Revision##/${VERSION}/g" kubernetes-resources/deployment/deployment.yaml'
+                sh 'sed -i "s/##Revision##/${VERSION}/g" kubernetes-resources/deployment/service-patch.yaml'
+                sh 'sed -i "s/##Revision##/${ROLLBACKTO}/g" kubernetes-resources/deployment/service-patch-rollback.yaml'
                 withAWS(region:'us-west-2',credentials:'aws-static') {
                     sh 'aws eks --region us-west-2 update-kubeconfig --name capstone-project-EKS-Cluster'
                     // In a future version let the version as a parameter getting and sed into the yaml and using the same as the docker file
@@ -57,15 +60,25 @@ pipeline {
             steps {
                 script {
                      sleep 60
-//                    response = $(CMD)
-//                    if (response = '200') {
-//                        echo "Deploy successfull"
-//                    }
-//                    else {
-//                        echo "Rollback Started"
-//                        sh 'kubectl patch service flask-app --patch "$(cat ./kubernetes-resources/deployment/service-patch.yaml)"'
-//                        exit 1
-//                    }
+                    response = $(CMD)
+                    if (response == '200') {
+                        echo "Deploy successfull"
+                        withAWS(region:'us-west-2',credentials:'aws-static') {
+                            sh 'aws eks --region us-west-2 update-kubeconfig --name capstone-project-EKS-Cluster'
+                            sh 'kubectl delete deployment flask-app-${ROLLBACKTO}'
+                            echo 'removing previous version'
+                        }
+                    }
+                    else {
+                        echo "Rollback Started"
+                        withAWS(region:'us-west-2',credentials:'aws-static') {
+                            sh 'aws eks --region us-west-2 update-kubeconfig --name capstone-project-EKS-Cluster'
+                            sh 'kubectl patch service flask-app --patch "$(cat ./kubernetes-resources/deployment/service-patch-rollback.yaml)"'
+                            sh 'kubectl delete deployment flask-app-${VERSION}'
+                            echo 'removing new and failed version'
+                        }
+                        exit 1
+                    }
                 }
             }
         }
