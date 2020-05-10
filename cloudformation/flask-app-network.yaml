@@ -451,7 +451,7 @@ Resources:
         ScalingConfig:
             DesiredSize: 0
             MaxSize: 2
-            MinSize: 0
+            MinSize: 1
         Subnets:
            - !Ref PrivateSubnet1
            - !Ref PrivateSubnet2
@@ -490,7 +490,7 @@ Resources:
       Properties:
         DesiredCapacity: 0
         LaunchConfigurationName: !Ref WorkerNodeLaunchConfig
-        MinSize: 0
+        MinSize: 1
         MaxSize: 3
         VPCZoneIdentifier:
             - !Ref PrivateSubnet1
