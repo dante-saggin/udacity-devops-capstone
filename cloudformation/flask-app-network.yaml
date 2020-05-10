@@ -444,7 +444,7 @@ Resources:
         DiskSize: 10
         InstanceTypes:
           - !Ref WorkerNodeInstanceType
-        NodegroupName: WorkerNodeGroupPOC
+        NodegroupName: WorkerNodeGroup
         NodeRole: !GetAtt WorkerNodeInstanceRole.Arn
         ScalingConfig:
             DesiredSize: 1
@@ -504,7 +504,6 @@ Resources:
         AutoScalingRollingUpdate:
           MaxBatchSize: '1'
           MinInstancesInService: 1
-          PauseTime: PT5M
 
 Outputs:
 
